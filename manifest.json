@@ -1,0 +1,17 @@
+{
+  "name": "Дневник Тренера",
+  "short_name": "Дневник",
+  "description": "Приложение для ведения гимнастического журнала",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#fce4ec",
+  "theme_color": "#d81b60",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
