@@ -48,10 +48,10 @@
             <h1>📖 Дневник Тренера</h1>
         </div>
         <div class="menu">
-            <button onclick="openGroup('junior')">🩰 Младшая группа</button>
-            <button onclick="openGroup('middle')">🤸‍♀️ Средняя группа</button>
-            <button onclick="openGroup('senior')">🏆 Старшая группа</button>
-            <button onclick="openGroup('show')">🎪 Шоу-группа</button>
+            <button onclick="openGroup('junior')">🩰 Младшая группа (3–8 лет)</button>
+            <button onclick="openGroup('middle')">🤸‍♀️ Средняя группа (9–14 лет)</button>
+            <button onclick="openGroup('senior')">🏆 Старшая группа (15–18 лет)</button>
+            <button onclick="openGroup('circus')">🎪 Цирковая группа (с 13 лет)</button>
             <button onclick="openReports()" style="background: #e1f5fe; border-color: #81d4fa; color: #0277bd;">📊 Итоги (Четверть / Полугодие / Год)</button>
         </div>
     </div>
@@ -92,36 +92,36 @@
     </div>
 
     <script>
-        var appData = JSON.parse(localStorage.getItem('gymDataFinal')) || {
+        // Твой точный список детей в алфавитном порядке
+        var appData = JSON.parse(localStorage.getItem('gymDataIdeal')) || {
             junior: { 
                 title: "Младшая группа", 
                 students: [
                     { id: 1, name: "Артём", age: "8 лет", date: "01.09.2023", grade: "😄", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" },
-                    { id: 2, name: "Даша", age: "4 года", date: "15.09.2026", grade: "🙂", photo: "", notes: "Вывих пальца", log: {}, q: "", h: "", y: "", c: "" },
-                    { id: 3, name: "Милана", age: "5 лет", date: "19.11.2026", grade: "😐", photo: "", notes: "Новенькая", log: {}, q: "", h: "", y: "", c: "" },
-                    { id: 4, name: "Полина", age: "6 лет", date: "02.09.2024", grade: "😡", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" },
-                    { id: 5, name: "Тимур", age: "5 лет", date: "20.09.2025", grade: "😴", photo: "", notes: "Часто пропускает", log: {}, q: "", h: "", y: "", c: "" },
-                    { id: 6, name: "Влад", age: "11 лет", date: "01.09.2023", grade: "2", photo: "", notes: "Понижен из средней", log: {}, q: "", h: "", y: "", c: "" },
-                    { id: 7, name: "Егор", age: "10 лет", date: "01.09.2024", grade: "2", photo: "", notes: "Понижен из средней", log: {}, q: "", h: "", y: "", c: "" }
+                    { id: 2, name: "Влад", age: "11 лет", date: "01.09.2023", grade: "2", photo: "", notes: "Понижен из средней", log: {}, q: "", h: "", y: "", c: "" },
+                    { id: 3, name: "Даша", age: "4 года", date: "15.09.2026", grade: "🙂", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" },
+                    { id: 4, name: "Егор", age: "10 лет", date: "01.09.2024", grade: "2", photo: "", notes: "Понижен из средней", log: {}, q: "", h: "", y: "", c: "" },
+                    { id: 5, name: "Милана", age: "5 лет", date: "19.11.2026", grade: "😐", photo: "", notes: "Новенькая", log: {}, q: "", h: "", y: "", c: "" },
+                    { id: 6, name: "Полина", age: "6 лет", date: "02.09.2024", grade: "😡", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" },
+                    { id: 7, name: "Тимур", age: "5 лет", date: "20.09.2025", grade: "😴", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" }
                 ] 
             },
             middle: { 
                 title: "Средняя группа", 
                 students: [
-                    { id: 8, name: "Алиса", age: "7 лет", date: "02.09.2024", grade: "7", photo: "", notes: "Переведена из младшей", log: {}, q: "", h: "", y: "", c: "" },
+                    { id: 8, name: "Алиса", age: "7 лет", date: "02.09.2024", grade: "7", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" },
                     { id: 9, name: "Варя", age: "11 лет", date: "01.09.2023", grade: "8", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" },
                     { id: 10, name: "Вероника", age: "10 лет", date: "21.11.2026", grade: "🙂", photo: "", notes: "Новенькая", log: {}, q: "", h: "", y: "", c: "" },
-                    { id: 11, name: "Дима", age: "13 лет", date: "01.09.2022", grade: "10", photo: "", notes: "Сдал всё на отлично", log: {}, q: "", h: "", y: "", c: "" },
-                    { id: 12, name: "Ксюша", age: "12 лет", date: "01.09.2023", grade: "2", photo: "", notes: "Не сдала экзамен", log: {}, q: "", h: "", y: "", c: "" },
-                    { id: 13, name: "Маша", age: "13 лет", date: "01.09.2022", grade: "3", photo: "", notes: "Не сдала", log: {}, q: "", h: "", y: "", c: "" },
-                    { id: 14, name: "Максим", age: "12 лет", date: "01.09.2023", grade: "4", photo: "", notes: "Не сдал", log: {}, q: "", h: "", y: "", c: "" },
-                    { id: 15, name: "Никита", age: "14 лет", date: "01.09.2021", grade: "Н", photo: "", notes: "Пропуск", log: {}, q: "", h: "", y: "", c: "" },
-                    { id: 16, name: "Соня", age: "10 лет", date: "01.09.2024", grade: "2", photo: "", notes: "Не сдала", log: {}, q: "", h: "", y: "", c: "" },
-                    { id: 17, name: "Юля", age: "13 лет", date: "01.09.2022", grade: "6", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" }
+                    { id: 11, name: "Ксюша", age: "12 лет", date: "01.09.2023", grade: "2", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" },
+                    { id: 12, name: "Максим", age: "12 лет", date: "01.09.2023", grade: "4", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" },
+                    { id: 13, name: "Маша", age: "13 лет", date: "01.09.2022", grade: "3", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" },
+                    { id: 14, name: "Никита", age: "14 лет", date: "01.09.2021", grade: "Н", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" },
+                    { id: 15, name: "Соня", age: "10 лет", date: "01.09.2024", grade: "2", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" },
+                    { id: 16, name: "Юля", age: "13 лет", date: "01.09.2022", grade: "6", photo: "", notes: "", log: {}, q: "", h: "", y: "", c: "" }
                 ]
             },
             senior: { title: "Старшая группа", students: [] },
-            show: { title: "Шоу-группа", students: [] }
+            circus: { title: "Цирковая группа", students: [] }
         };
         
         var currentGroupId = '';
@@ -193,7 +193,7 @@
                 <label>Имя:</label>
                 <input type="text" id="edit-name" value="${student.name}">
                 
-                <label>Заметка (характеристика):</label>
+                <label>Заметка:</label>
                 <textarea id="edit-notes" rows="3">${student.notes || ''}</textarea>
                 
                 <button onclick="saveProfile()">Сохранить изменения</button>
@@ -307,7 +307,7 @@
             showScreen('reports-screen');
             var list = document.getElementById('reports-list');
             list.innerHTML = '';
-            var groupNames = { junior: "Младшая", middle: "Средняя", senior: "Старшая", show: "Шоу-группа" };
+            var groupNames = { junior: "Младшая", middle: "Средняя", senior: "Старшая", circus: "Цирковая" };
 
             for (var g in appData) {
                 if (appData[g].students.length > 0) {
@@ -347,4 +347,10 @@
                         student.q = qElem.value;
                         student.h = document.getElementById(`h-${student.id}`).value;
                         student.y = document.getElementById(`y-${student.id}`).value;
-                        student.c = document.
+                        student.c = document.getElementById(`c-${student.id}`).value;
+                    }
+                });
+            }
+            saveData();
+            alert("Все итоги сохранены!");
+     
