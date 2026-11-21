@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дневник Тренера</title>
+    <!-- Настройки для PWA (чтобы работало как приложение) -->
+    <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22%D0%94%D0%BD%D0%B5%D0%B2%D0%BD%D0%B8%D0%BA%20%D0%A2%D1%80%D0%B5%D0%BD%D0%B5%D1%80%D0%B0%22%2C%22short_name%22%3A%22%D0%94%D0%BD%D0%B5%D0%B2%D0%BD%D0%B8%D0%BA%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23fce4ec%22%2C%22theme_color%22%3A%22%23d81b60%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn-icons-png.flaticon.com%2F512%2F2966%2F2966074.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: sans-serif; background-color: #fce4ec; margin: 0; padding: 15px; color: #333; }
+        .header { text-align: center; color: #d81b60; margin-bottom: 20px; }
+        .menu button { display: block; width: 100%; padding: 20px; margin-bottom: 15px; background: white; border: 2px solid #f8bbd0; border-radius: 15px; font-size: 18px; font-weight: bold; color: #880e4f; text-align: left; cursor: pointer; }
+        .menu button:active { background-color: #f8bbd0; }
+        .screen { display: none; }
+        .back-btn { background: none; border: none; color: #d81b60; font-size: 18px; font-weight: bold; padding: 10px 0; cursor: pointer; margin-bottom: 10px; }
+        .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .name { font-weight: bold; font-size: 18px; }
+        .age { font-size: 14px; color: #777; }
+        .grade { font-size: 24px; background: #fff3e0; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 50%; border: 1px solid #ffcc80; cursor: pointer; }
+        .add-btn { background: #d81b60; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 16px; font-weight: bold; width: 100%; margin-top: 20px; cursor: pointer; }
+        .add-form { display: none; background: white; padding: 15px; border-radius: 10px; margin-top: 10px; }
+        .add-form input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        .add-form button { background: #4caf50; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body onload="loadData()">
+
+    <div id="main-menu" class="screen" style="display: block;">
+        <div class="header">
+            <h1>📖 Дневник Тренера</h1>
+            <p>Выбери группу</p>
+        </div>
+        <div class="menu">
+            <button onclick="openGroup('junior')">🩰 Младшая группа</button>
+            <button onclick="openGroup('middle')">🤸‍♀️ Средняя группа</button>
+            <button onclick="openGroup('senior')">🏆 Старшая группа</button>
+            <button onclick="openGroup('show')">🎪 Шоу-группа</button>
+        </div>
+    </div>
+
+    <div id="group-screen" class="screen">
+        <button class="back-btn" onclick="goBack()">← Назад в меню</button>
+        <h2 id="group-title" style="color: #d81b60; text-align: center;"></h2>
+        <div id="students-list"></div>
+        
+        <button class="add-btn" onclick="showAddForm()">+ Добавить ученика</button>
+        
+        <div id="add-form" class="add-form">
+            <input type="text" id="new-name" placeholder="Имя ребенка">
+            <input type="text" id="new-age" placeholder="Возраст (например, 7 лет)">
+            <input type="text" id="new-grade" placeholder="Оценка (5 или 😄)">
+            <button onclick="saveStudent()">Сохранить</button>
+        </div>
+    </div>
+
+    <script>
+        var groups = JSON.parse(localStorage.getItem('gymnasticsData')) || {
+            junior: { title: "Младшая группа", students: [ { name: "Артём", age: "8 лет", grade: "😄" }, { name: "Даша", age: "4 года", grade: "🙂" } ] },
+            middle: { title: "Средняя группа", students: [ { name: "Алиса", age: "7 лет", grade: "7" }, { name: "Варя", age: "11 лет", grade: "8" } ] },
+            senior: { title: "Старшая группа", students: [] },
+            show: { title: "Шоу-группа", students: [] }
+        };
+
+        var currentGroup = '';
+
+        function openGroup(groupId) {
+            currentGroup = groupId;
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('group-screen').style.display = 'block';
+            document.getElementById('add-form').style.display = 'none';
+            document.getElementById('group-title').innerText = groups[groupId].title;
+            renderStudents();
+        }
+
+        function renderStudents() {
+            var list = document.getElementById('students-list');
+            list.innerHTML = ''; 
+            
+            if (groups[currentGroup].students.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#777;">Здесь пока нет учеников.</p>';
+            }
+
+            groups[currentGroup].students.forEach(function(student, index) {
+                var card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div>
+                        <div class="name">${student.name}</div>
+                        <div class="age">${student.age}</div>
+                    </div>
+                    <div class="grade" onclick="changeGrade(${index})">${student.grade}</div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function showAddForm() { document.getElementById('add-form').style.display = 'block'; }
+
+        function saveStudent() {
+            var name = document.getElementById('new-name').value;
+            if (name === "") { alert("Введите имя!"); return; }
+            
+            groups[currentGroup].students.push({ 
+                name: name, 
+                age: document.getElementById('new-age').value || "-", 
+                grade: document.getElementById('new-grade').value || "🙂" 
+            });
+            
+            localStorage.setItem('gymnasticsData', JSON.stringify(groups));
+            document.getElementById('new-name').value = "";
+            document.getElementById('new-age').value = "";
+            document.getElementById('new-grade').value = "";
+            document.getElementById('add-form').style.display = 'none';
+            renderStudents();
+        }
+
+        function changeGrade(index) {
+            var grades = ["😄", "🙂", "😐", "😴", "😡", "10", "9", "8", "7", "6", "5", "4", "3", "2", "1", "Н"];
+            var current = groups[currentGroup].students[index].grade;
+            var nextIndex = (grades.indexOf(current) + 1) % grades.length;
+            groups[currentGroup].students[index].grade = grades[nextIndex];
+            localStorage.setItem('gymnasticsData', JSON.stringify(groups));
+            renderStudents();
+        }
+
+        function goBack() {
+            document.getElementById('group-screen').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'block';
+        }
+
+        function loadData() {}
+    </script>
+</body>
+</html>
