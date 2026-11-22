@@ -7,141 +7,200 @@
     <link rel="manifest" href="manifest.json">
     <style>
         * { box-sizing: border-box; font-family: Arial, sans-serif; }
-        body { background-color: #fce4ec; margin: 0; padding: 10px; color: #333; }
+        body { background-color: #fce4ec; margin: 0; padding: 10px 10px 70px 10px; color: #333; }
         .screen { display: none; }
         .active { display: block; }
         h2, h3 { text-align: center; color: #d81b60; margin-top: 0; }
         button { display: block; width: 100%; padding: 12px; margin-bottom: 10px; background: white; border: 2px solid #f8bbd0; border-radius: 8px; font-size: 16px; font-weight: bold; color: #880e4f; cursor: pointer; text-align: left;}
-        .back { background: none; border: none; color: #d81b60; padding: 0 0 10px 0; font-weight: bold;}
+        .back { background: none; border: none; color: #d81b60; padding: 0 0 10px 0; font-weight: bold; text-align: left; width: auto;}
         .card { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; cursor: pointer; }
+        .row { display: flex; gap: 10px; align-items: center; }
         .name { font-weight: bold; font-size: 16px; }
-        .grade { font-size: 18px; background: #fff3e0; padding: 5px 10px; border-radius: 8px; border: 1px solid #ffcc80; }
-        .form-box { display: none; background: white; padding: 15px; border-radius: 8px; margin-top: 10px; }
+        .form-box { background: white; padding: 15px; border-radius: 8px; margin-top: 10px; }
         input, textarea, select { width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px;}
         .btn-save { background: #4caf50; color: white; border: none; text-align: center;}
         .btn-del { background: #f44336; color: white; border: none; text-align: center;}
         .btn-blue { background: #2196f3; color: white; border: none; text-align: center;}
         .log-item { background: #f5f5f5; padding: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; border-radius: 4px;}
-        .legend { background: white; padding: 10px; margin-top: 15px; font-size: 12px; border-left: 4px solid #f8bbd0; border-radius: 4px;}
-        .row { display: flex; gap: 10px; align-items: center; }
         .avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #eee; border: 2px solid #f8bbd0;}
+        
+        /* Нижнее меню */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ccc; z-index: 100; }
+        .bottom-nav button { flex: 1; border: none; border-radius: 0; text-align: center; padding: 15px 0; margin: 0; font-size: 14px; background: none; color: #777; }
+        .bottom-nav button.active-nav { color: #d81b60; font-weight: bold; border-top: 3px solid #d81b60; }
+
+        /* Таблица журнала */
+        .journal-table { width: 100%; border-collapse: collapse; background: white; font-size: 12px; }
+        .journal-table th, .journal-table td { border: 1px solid #ddd; padding: 5px; text-align: center; }
+        .journal-table th { background: #f8bbd0; color: #333; position: sticky; top: 0; }
+        .journal-table .name-col { text-align: left; font-weight: bold; min-width: 80px; }
+        .journal-table td { cursor: pointer; }
+        .journal-table td:active { background: #fff3e0; }
     </style>
 </head>
 <body>
 
-    <!-- ГЛАВНОЕ МЕНЮ -->
-    <div id="main-menu" class="screen active">
-        <h2>📖 Дневник Тренера PRO</h2>
+    <!-- ГЛАВНОЕ МЕНЮ (ГРУППЫ) -->
+    <div id="groups-screen" class="screen active">
+        <h2>📖 Группы</h2>
         <div id="groups-list"></div>
-        <button class="btn-blue" onclick="showScreen('group-edit')">+ Создать новую группу</button>
+        <button class="btn-blue" onclick="openGroupEdit(null)">+ Создать новую группу</button>
         <button class="btn-save" onclick="openMaterials()">📚 Темы и материалы</button>
+    </div>
+
+    <!-- СПИСОК ВСЕХ УЧЕНИКОВ -->
+    <div id="all-students-screen" class="screen">
+        <h2>👧 Все ученики</h2>
+        <button class="btn-save" onclick="openStudentEdit(null, null)">+ Добавить ученика</button>
+        <div id="all-students-list"></div>
+    </div>
+
+    <!-- ЖУРНАЛ ПО МЕСЯЦАМ -->
+    <div id="journal-screen" class="screen">
+        <h2>📅 Журнал</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <button class="btn-blue" style="width:auto; padding:5px 15px;" onclick="changeMonth(-1)">←</button>
+            <b id="current-month-label"></b>
+            <button class="btn-blue" style="width:auto; padding:5px 15px;" onclick="changeMonth(1)">→</button>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="journal-table" id="journal-table">
+                <!-- Сюда рендерится сетка -->
+            </table>
+        </div>
     </div>
 
     <!-- ЭКРАН ГРУППЫ -->
     <div id="group-screen" class="screen">
-        <button class="back" onclick="showScreen('main-menu')">← Назад к группам</button>
+        <button class="back" onclick="showScreen('groups-screen')">← Назад к группам</button>
         <h3 id="group-title"></h3>
         <p id="group-desc" style="text-align:center; font-size:14px; color:#777;"></p>
         <div style="text-align:center; margin-bottom:10px;">
-            <button class="btn-blue" style="display:inline-block; width:auto; padding:5px 10px; font-size:12px;" onclick="editGroup()">⚙️ Настройки группы</button>
+            <button class="btn-blue" style="display:inline-block; width:auto; padding:5px 10px; font-size:12px;" onclick="openGroupEdit(currentGroupId)">⚙️ Настройки группы</button>
         </div>
-        <div id="students-list"></div>
-        <button class="btn-save" onclick="openStudentEdit(null)">+ Добавить ученика</button>
+        <div id="group-students-list"></div>
+        <button class="btn-save" onclick="openStudentEdit(null, currentGroupId)">+ Добавить ученика</button>
     </div>
 
     <!-- РЕДАКТОР ГРУППЫ -->
     <div id="group-edit" class="screen">
-        <button class="back" onclick="showScreen('main-menu')">← Отмена</button>
-        <h3>Группа</h3>
-        <div class="form-box" style="display:block;">
+        <button class="back" onclick="showScreen('groups-screen')">← Назад</button>
+        <h3>Настройки группы</h3>
+        <div class="form-box">
             <input type="text" id="g-name" placeholder="Название (например: Младшая)">
             <input type="text" id="g-desc" placeholder="Описание группы">
             <select id="g-type">
-                <option value="smile">Оценки: Смайлики (младшие)</option>
-                <option value="digit">Оценки: Цифры 1-10 (старшие)</option>
+                <option value="smile">Оценки: Смайлики</option>
+                <option value="digit">Оценки: Цифры 1-10</option>
             </select>
             <button class="btn-save" onclick="saveGroup()">Сохранить</button>
             <button class="btn-del" id="g-del-btn" onclick="deleteGroup()" style="display:none;">Удалить группу</button>
         </div>
     </div>
 
-    <!-- ПРОФИЛЬ УЧЕНИКА -->
-    <div id="student-screen" class="screen">
-        <button class="back" onclick="closeStudent()">← Назад к группе</button>
-        <h3 id="s-title"></h3>
-        <div class="form-box" style="display:block;">
-            <div class="row">
-                <img id="s-photo-view" class="avatar" src="https://cdn-icons-png.flaticon.com/512/847/847969.png">
-                <input type="file" id="s-photo" accept="image/*" style="width:auto;">
-            </div>
+    <!-- РЕДАКТОР УЧЕНИКА -->
+    <div id="student-edit-screen" class="screen">
+        <button class="back" onclick="closeStudentEdit()">← Назад</button>
+        <h3 id="edit-student-title">Данные ученика</h3>
+        <div class="form-box">
+            <img id="s-photo-view" class="avatar" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" style="margin-bottom:10px;">
+            <label>Фото:</label>
+            <input type="file" id="s-photo-file" accept="image/*">
+            
             <input type="text" id="s-name" placeholder="Имя">
-            <input type="date" id="s-birthday" placeholder="Дата рождения">
-            <input type="date" id="s-date" placeholder="Дата зачисления">
+            <label>Дата рождения:</label>
+            <input type="date" id="s-birthday">
+            <label>Дата зачисления:</label>
+            <input type="date" id="s-date">
             <textarea id="s-notes" rows="2" placeholder="Характеристика"></textarea>
+            <label>Группа:</label>
             <select id="s-group-id"></select>
+            
             <button class="btn-save" onclick="saveStudent()">Сохранить</button>
-            <button class="btn-del" id="s-del-btn" onclick="deleteStudent()" style="display:none;">Удалить</button>
+            <button class="btn-del" id="s-del-btn" onclick="deleteStudent()" style="display:none;">Удалить ученика</button>
+        </div>
+    </div>
+
+    <!-- ПРОСМОТР УЧЕНИКА (КАРТОЧКА) -->
+    <div id="student-view-screen" class="screen">
+        <button class="back" onclick="closeStudentView()">← Назад</button>
+        <h3 id="sv-title"></h3>
+        <div style="text-align:center; margin-bottom:10px;">
+            <button class="btn-blue" style="display:inline-block; width:auto; padding:5px 10px; font-size:12px;" onclick="openStudentEdit(currentStudentId, null)">✏️ Редактировать</button>
         </div>
         
-        <div style="background:white; padding:10px; border-radius:8px; margin-top:15px;">
-            <h4>Журнал по датам</h4>
-            <div id="s-logs"></div>
-            <div style="display:flex; gap:5px; margin-top:10px;">
-                <input type="date" id="log-date" style="flex:1;">
-                <input type="text" id="log-grade" placeholder="Оценка" style="flex:1;">
-                <button class="btn-blue" style="width:auto; padding:0 10px;" onclick="addLog()">+</button>
-            </div>
+        <div style="background:white; padding:10px; border-radius:8px;">
+            <h4>Инфо</h4>
+            <p id="sv-info"></p>
+            <p id="sv-notes" style="font-style:italic; color:#555;"></p>
         </div>
 
         <div style="background:white; padding:10px; border-radius:8px; margin-top:15px;">
-            <h4>Итоговые оценки (Средний балл)</h4>
-            <p><b>Четверть:</b> <span id="s-q"></span></p>
-            <p><b>Год:</b> <span id="s-y"></span></p>
+            <h4>Оценки</h4>
+            <div id="sv-logs"></div>
         </div>
     </div>
 
     <!-- ТЕМЫ И МАТЕРИАЛЫ -->
     <div id="materials-screen" class="screen">
-        <button class="back" onclick="showScreen('main-menu')">← Назад в меню</button>
+        <button class="back" onclick="showScreen('groups-screen')">← Назад</button>
         <h3>📚 Темы и материалы</h3>
         <div id="materials-list"></div>
-        <div class="form-box" style="display:block;">
-            <input type="text" id="m-title" placeholder="Название темы (например: Кувырок вперед)">
+        <div class="form-box">
+            <input type="text" id="m-title" placeholder="Название темы">
             <input type="number" id="m-level" placeholder="Уровень сложности (1-10)" min="1" max="10">
-            <button class="btn-save" onclick="saveMaterial()">Добавить материал</button>
+            <button class="btn-save" onclick="saveMaterial()">Добавить</button>
         </div>
     </div>
 
+    <!-- НИЖНЕЕ МЕНЮ -->
+    <div class="bottom-nav">
+        <button id="nav-groups" class="active-nav" onclick="switchTab('groups-screen', 'nav-groups')">Группы</button>
+        <button id="nav-students" onclick="switchTab('all-students-screen', 'nav-students')">Ученики</button>
+        <button id="nav-journal" onclick="switchTab('journal-screen', 'nav-journal')">Журнал</button>
+    </div>
+
     <script>
-        // БАЗА ДАННЫХ
-        var db = JSON.parse(localStorage.getItem('gymProDB')) || {
+        // База данных
+        var db = JSON.parse(localStorage.getItem('gymProDBv3')) || {
             groups: [
                 { id: 'g1', name: "Младшая группа", desc: "3-8 лет", type: "smile", students: [] },
                 { id: 'g2', name: "Средняя группа", desc: "9-14 лет", type: "digit", students: [] }
             ],
-            materials: [
-                { id: 'm1', title: "Кувырок вперед", level: 1 },
-                { id: 'm2', title: "Шпагат", level: 3 }
-            ]
+            materials: []
         };
 
         var currentGroupId = null;
         var currentStudentId = null;
+        var tempPhotoData = "";
+        var currentDate = new Date(); // Для журнала
+        var currentMonth = currentDate.getMonth();
+        var currentYear = currentDate.getFullYear();
 
-        // НАВИГАЦИЯ
+        // Навигация
+        function switchTab(screenId, navId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            document.querySelectorAll('.bottom-nav button').forEach(b => b.classList.remove('active-nav'));
+            document.getElementById(navId).classList.add('active-nav');
+            
+            if (screenId === 'all-students-screen') renderAllStudents();
+            if (screenId === 'journal-screen') renderJournal();
+        }
+
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            if(id === 'main-menu') renderGroups();
         }
 
-        // ГРУППЫ
+        // --- ВКЛАДКА ГРУППЫ ---
         function renderGroups() {
             var list = document.getElementById('groups-list');
             list.innerHTML = '';
             db.groups.forEach(g => {
                 var b = document.createElement('button');
-                b.innerHTML = `📁 ${g.name}`;
+                b.innerHTML = `📁 ${g.name} <span style="font-size:12px; color:#777;">(${g.students.length} чел.)</span>`;
                 b.onclick = function() { openGroup(g.id); };
                 list.appendChild(b);
             });
@@ -153,44 +212,12 @@
             document.getElementById('group-title').innerText = g.name;
             document.getElementById('group-desc').innerText = g.desc;
             showScreen('group-screen');
-            renderStudents();
+            renderGroupStudents();
         }
 
-        function editGroup() {
+        function renderGroupStudents() {
             var g = db.groups.find(x => x.id === currentGroupId);
-            document.getElementById('g-name').value = g.name;
-            document.getElementById('g-desc').value = g.desc;
-            document.getElementById('g-type').value = g.type;
-            document.getElementById('g-del-btn').style.display = 'block';
-            showScreen('group-edit');
-        }
-
-        function saveGroup() {
-            var name = document.getElementById('g-name').value;
-            var desc = document.getElementById('g-desc').value;
-            var type = document.getElementById('g-type').value;
-            if(!name) return alert("Введите название!");
-            
-            if(currentGroupId) {
-                var g = db.groups.find(x => x.id === currentGroupId);
-                g.name = name; g.desc = desc; g.type = type;
-            } else {
-                db.groups.push({ id: 'g' + Date.now(), name: name, desc: desc, type: type, students: [] });
-            }
-            saveDB(); showScreen('main-menu');
-        }
-
-        function deleteGroup() {
-            if(confirm("Удалить группу и всех её учеников?")) {
-                db.groups = db.groups.filter(x => x.id !== currentGroupId);
-                saveDB(); showScreen('main-menu');
-            }
-        }
-
-        // УЧЕНИКИ
-        function renderStudents() {
-            var g = db.groups.find(x => x.id === currentGroupId);
-            var list = document.getElementById('students-list');
+            var list = document.getElementById('group-students-list');
             list.innerHTML = '';
             if(g.students.length === 0) list.innerHTML = '<p style="text-align:center;">Нет учеников</p>';
             
@@ -199,144 +226,183 @@
                 d.className = 'card';
                 d.innerHTML = `<div class="row">
                     <img src="${s.photo || 'https://cdn-icons-png.flaticon.com/512/847/847969.png'}" class="avatar">
-                    <div><div class="name">${s.name}</div><div style="font-size:12px; color:#777;">${s.age || ''}</div></div>
+                    <div><div class="name">${s.name}</div></div>
                 </div>`;
-                d.onclick = function() { openStudent(s.id); };
+                d.onclick = function() { openStudentView(s.id, g.id); };
                 list.appendChild(d);
             });
         }
 
-        function openStudentEdit(id) {
-            currentStudentId = id;
-            document.getElementById('s-del-btn').style.display = id ? 'block' : 'none';
+        // --- ВКЛАДКА ВСЕ УЧЕНИКИ ---
+        function renderAllStudents() {
+            var list = document.getElementById('all-students-list');
+            list.innerHTML = '';
+            db.groups.forEach(g => {
+                g.students.forEach(s => {
+                    var d = document.createElement('div');
+                    d.className = 'card';
+                    d.innerHTML = `<div class="row">
+                        <img src="${s.photo || 'https://cdn-icons-png.flaticon.com/512/847/847969.png'}" class="avatar">
+                        <div>
+                            <div class="name">${s.name}</div>
+                            <div style="font-size:12px; color:#777;">${g.name}</div>
+                        </div>
+                    </div>`;
+                    d.onclick = function() { openStudentView(s.id, g.id); };
+                    list.appendChild(d);
+                });
+            });
+        }
+
+        // --- ВКЛАДКА ЖУРНАЛ (СЕТКА) ---
+        function renderJournal() {
+            var monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+            document.getElementById('current-month-label').innerText = monthNames[currentMonth] + " " + currentYear;
             
-            // Заполняем список групп для перевода
+            var table = document.getElementById('journal-table');
+            table.innerHTML = '';
+            
+            var daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            // Шапка таблицы
+            var thead = document.createElement('thead');
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<th class="name-col">Имя</th>';
+            for(var i=1; i<=daysInMonth; i++) {
+                tr.innerHTML += `<th>${i}</th>`;
+            }
+            thead.appendChild(tr);
+            table.appendChild(thead);
+
+            // Тело таблицы
+            var tbody = document.createElement('tbody');
+            db.groups.forEach(g => {
+                g.students.forEach(s => {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML = `<td class="name-col">${s.name}</td>`;
+                    for(var i=1; i<=daysInMonth; i++) {
+                        var dayStr = String(i).padStart(2, '0');
+                        var monthStr = String(currentMonth + 1).padStart(2, '0');
+                        var dateKey = `${currentYear}-${monthStr}-${dayStr}`;
+                        
+                        var grade = s.logs && s.logs[dateKey] ? s.logs[dateKey] : '';
+                        
+                        tr.innerHTML += `<td onclick="editJournalCell('${g.id}', '${s.id}', '${dateKey}')">${grade}</td>`;
+                    }
+                    tbody.appendChild(tr);
+                });
+            });
+            table.appendChild(tbody);
+        }
+
+        function changeMonth(offset) {
+            currentMonth += offset;
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            renderJournal();
+        }
+
+        function editJournalCell(groupId, studentId, dateKey) {
+            var s = db.groups.find(x => x.id === groupId).students.find(x => x.id === studentId);
+            var currentGrade = s.logs && s.logs[dateKey] ? s.logs[dateKey] : '';
+            
+            var newGrade = prompt("Оценка за " + dateKey + " (оставьте пустым, чтобы удалить):", currentGrade);
+            if (newGrade !== null) {
+                if (newGrade === "") {
+                    if (s.logs) delete s.logs[dateKey];
+                } else {
+                    if (!s.logs) s.logs = {};
+                    s.logs[dateKey] = newGrade;
+                }
+                saveDB();
+                renderJournal();
+            }
+        }
+
+        // --- РЕДАКТИРОВАНИЕ ---
+        function openGroupEdit(id) {
+            currentGroupId = id;
+            if(id) {
+                var g = db.groups.find(x => x.id === id);
+                document.getElementById('g-name').value = g.name;
+                document.getElementById('g-desc').value = g.desc;
+                document.getElementById('g-type').value = g.type;
+                document.getElementById('g-del-btn').style.display = 'block';
+            } else {
+                document.getElementById('g-name').value = '';
+                document.getElementById('g-desc').value = '';
+                document.getElementById('g-del-btn').style.display = 'none';
+            }
+            showScreen('group-edit');
+        }
+
+        function saveGroup() {
+            var name = document.getElementById('g-name').value;
+            if(!name) return alert("Введите название!");
+            var desc = document.getElementById('g-desc').value;
+            var type = document.getElementById('g-type').value;
+            
+            if(currentGroupId) {
+                var g = db.groups.find(x => x.id === currentGroupId);
+                g.name = name; g.desc = desc; g.type = type;
+            } else {
+                db.groups.push({ id: 'g' + Date.now(), name: name, desc: desc, type: type, students: [] });
+            }
+            saveDB(); switchTab('groups-screen', 'nav-groups');
+        }
+
+        function deleteGroup() {
+            if(confirm("Удалить группу и всех её учеников?")) {
+                db.groups = db.groups.filter(x => x.id !== currentGroupId);
+                saveDB(); switchTab('groups-screen', 'nav-groups');
+            }
+        }
+
+        function openStudentEdit(id, groupIdContext) {
+            currentStudentId = id;
             var sel = document.getElementById('s-group-id');
             sel.innerHTML = '';
             db.groups.forEach(g => {
-                sel.innerHTML += `<option value="${g.id}" ${g.id === currentGroupId ? 'selected' : ''}>${g.name}</option>`;
+                sel.innerHTML += `<option value="${g.id}" ${g.id === (groupIdContext || currentGroupId) ? 'selected' : ''}>${g.name}</option>`;
             });
 
             if(id) {
-                var s = db.groups.find(x => x.id === currentGroupId).students.find(x => x.id === id);
-                document.getElementById('s-name').value = s.name;
-                document.getElementById('s-birthday').value = s.birthday || '';
-                document.getElementById('s-date').value = s.date || '';
-                document.getElementById('s-notes').value = s.notes || '';
-                document.getElementById('s-photo-view').src = s.photo || 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
+                // Ищем ученика во всех группах
+                var foundS = null;
+                var foundG = null;
+                db.groups.forEach(g => {
+                    var s = g.students.find(x => x.id === id);
+                    if(s) { foundS = s; foundG = g; }
+                });
+                
+                document.getElementById('s-name').value = foundS.name;
+                document.getElementById('s-birthday').value = foundS.birthday || '';
+                document.getElementById('s-date').value = foundS.date || '';
+                document.getElementById('s-notes').value = foundS.notes || '';
+                document.getElementById('s-photo-view').src = foundS.photo || 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
+                tempPhotoData = foundS.photo || "";
+                document.getElementById('s-del-btn').style.display = 'block';
+                sel.value = foundG.id;
             } else {
                 document.getElementById('s-name').value = '';
                 document.getElementById('s-birthday').value = '';
                 document.getElementById('s-date').value = '';
                 document.getElementById('s-notes').value = '';
                 document.getElementById('s-photo-view').src = 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
+                tempPhotoData = "";
+                document.getElementById('s-del-btn').style.display = 'none';
             }
-            showScreen('student-screen');
+            showScreen('student-edit-screen');
         }
 
-        function saveStudent() {
-            var name = document.getElementById('s-name').value;
-            if(!name) return alert("Введите имя!");
-            
-            var targetGroupId = document.getElementById('s-group-id').value;
-            var studentData = {
-                id: currentStudentId || 's' + Date.now(),
-                name: name,
-                birthday: document.getElementById('s-birthday').value,
-                date: document.getElementById('s-date').value,
-                notes: document.getElementById('s-notes').value,
-                photo: document.getElementById('s-photo-view').src,
-                logs: {}
-            };
-
-            // Если редактируем существующего
-            if(currentStudentId) {
-                var s = db.groups.find(x => x.id === currentGroupId).students.find(x => x.id === currentStudentId);
-                studentData.logs = s.logs || {}; // Сохраняем старые оценки
-                
-                // Удаляем из старой группы
-                db.groups.find(x => x.id === currentGroupId).students = db.groups.find(x => x.id === currentGroupId).students.filter(x => x.id !== currentStudentId);
-            }
-
-            // Добавляем в новую (или ту же) группу
-            db.groups.find(x => x.id === targetGroupId).students.push(studentData);
-            
-            saveDB(); closeStudent();
-        }
-
-        function deleteStudent() {
-            if(confirm("Удалить ученика?")) {
-                db.groups.find(x => x.id === currentGroupId).students = db.groups.find(x => x.id === currentGroupId).students.filter(x => x.id !== currentStudentId);
-                saveDB(); closeStudent();
-            }
-        }
-
-        function closeStudent() { showScreen('group-screen'); renderStudents(); }
-
-        // ЖУРНАЛ И ОЦЕНКИ
-        function openStudent(id) {
-            currentStudentId = id;
-            var s = db.groups.find(x => x.id === currentGroupId).students.find(x => x.id === id);
-            document.getElementById('s-title').innerText = s.name;
-            
-            // Отрисовка журнала
-            var logs = document.getElementById('s-logs');
-            logs.innerHTML = '';
-            var sum = 0, count = 0;
-            
-            if(s.logs) {
-                Object.keys(s.logs).sort().reverse().forEach(date => {
-                    var grade = s.logs[date];
-                    logs.innerHTML += `<div class="log-item"><span>${date}</span> <b>${grade}</b></div>`;
-                    // Считаем средний балл только для цифр
-                    if(!isNaN(parseInt(grade)) && grade !== 'Н') {
-                        sum += parseInt(grade); count++;
-                    }
-                });
-            }
-            var avg = count > 0 ? (sum / count).toFixed(1) : 'Нет оценок';
-            document.getElementById('s-q').innerText = avg;
-            document.getElementById('s-y').innerText = avg; // Упрощенно: годовая = средняя
-
-            showScreen('student-screen');
-        }
-
-        function addLog() {
-            var date = document.getElementById('log-date').value;
-            var grade = document.getElementById('log-grade').value;
-            if(!date || !grade) return alert("Выберите дату и оценку!");
-
-            var s = db.groups.find(x => x.id === currentGroupId).students.find(x => x.id === currentStudentId);
-            if(!s.logs) s.logs = {};
-            s.logs[date] = grade;
-            
-            saveDB(); openStudent(currentStudentId); // Перерисовываем
-        }
-
-        // МАТЕРИАЛЫ
-        function openMaterials() {
-            showScreen('materials-screen');
-            var list = document.getElementById('materials-list');
-            list.innerHTML = '';
-            db.materials.forEach(m => {
-                list.innerHTML += `<div class="log-item"><span>${m.title}</span> <b>Уровень: ${m.level}</b></div>`;
-            });
-        }
-
-        function saveMaterial() {
-            var title = document.getElementById('m-title').value;
-            var level = document.getElementById('m-level').value;
-            if(!title || !level) return alert("Заполните поля!");
-            db.materials.push({ id: 'm' + Date.now(), title: title, level: level });
-            saveDB(); openMaterials();
-            document.getElementById('m-title').value = '';
-        }
-
-        // СОХРАНЕНИЕ
-        function saveDB() { localStorage.setItem('gymProDB', JSON.stringify(db)); }
-        
-        // Запуск
-        renderGroups();
-    </script>
-</body>
-</html>
+        document.getElementById('s-photo-file').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if(file) {
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    var img = new Image();
+                    img.onload = function() {
+                        var canvas = document.createElement('canvas');
+                        canvas.width = 100; canvas.height = 100;
+                        var ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, 100, 100)
