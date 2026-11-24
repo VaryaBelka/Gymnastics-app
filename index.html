@@ -1,57 +1,500 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="color-scheme" content="light dark" />
-  <title>Дневник Тренера</title>
-  <style>
-    :root{
-      --bg:#0b1020;
-      --card:#121a33;
-       --text:#e9efff;
-      --muted:#a9b4d0;
-      --line:rgba(255,255,255,.10);
-      --accent:#6aa7ff;
-      --danger:#ff6a7a;
-      --ok:#52e3a5;
-      --shadow: 0 10px 30px rgba(0,0,0,.25);
-      --radius:14px;
-      --radius2:10px;
-      --btn: rgba(255,255,255,.08);
-      --btn2: rgba(255,255,255,.12);
-      --focus: 0 0 0 3px rgba(106,167,255,.35);
-      --font: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-    [data-theme="light"]{
-      --bg:#f5f7ff;
-      --card:#ffffff;
-      --text:#111827;
-      --muted:#4b5563;
-      --line:rgba(0,0,0,.08);
-      --accent:#2563eb;
-      --danger:#dc2626;
-      --ok:#16a34a;
-      --shadow: 0 10px 30px rgba(0,0,0,.08);
-      --btn: rgba(0,0,0,.04);
-      --btn2: rgba(0,0,0,.06);
-      --focus: 0 0 0 3px rgba(37,99,235,.22);
-    }
-    *{ box-sizing: border-box; }
-    body{
-      margin:0;
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-    }
-    header{
-      position: sticky;
-      top:0;
-      z-index: 30;
-      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,0));
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-    [data-theme="light"] header{
-      background: linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,0));
-      
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#7c4dff">
+<title>Гимнастическая школа</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  :root {
+    --bg: #f5f3ff; --card: #fff; --primary: #7c4dff; --primary-dark: #5e35b1;
+    --text: #2d2d3a; --muted: #8a8a9e; --border: #e6e2f5;
+    --danger: #e53935; --success: #43a047;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); font-size: 15px;
+    overscroll-behavior: none;
+  }
+  body { padding-bottom: 70px; }
+
+  /* ---------- ЭКРАН ЗАГРУЗКИ ---------- */
+  #loader {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--primary); color: #fff;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    font-size: 17px; font-weight: 600;
+    transition: opacity .25s;
+  }
+  #loader.hide { opacity: 0; pointer-events: none; }
+  .spinner {
+    width: 42px; height: 42px;
+    border: 4px solid rgba(255,255,255,.3);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- HEADER ---------- */
+  header {
+    background: var(--primary); color: #fff;
+    padding: 14px 16px; position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  }
+  header h1 { font-size: 17px; margin: 0; font-weight: 600; flex: 1; }
+  header .back-btn {
+    background: rgba(255,255,255,.2); border: none; color: #fff;
+    border-radius: 8px; padding: 6px 12px; font-size: 14px;
+    touch-action: manipulation; cursor: pointer;
+  }
+  header .back-btn:active { background: rgba(255,255,255,.35); }
+
+  /* ---------- NAV ---------- */
+  nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card); border-top: 1px solid var(--border);
+    display: flex; z-index: 60;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  nav button {
+    flex: 1; border: none; background: none; padding: 8px 0 6px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    color: var(--muted); font-size: 11px; cursor: pointer;
+    touch-action: manipulation;
+  }
+  nav button .ico { font-size: 20px; line-height: 1; }
+  nav button.active { color: var(--primary); font-weight: 600; }
+
+  /* ---------- MAIN ---------- */
+  main { padding: 12px; max-width: 900px; margin: 0 auto; }
+  .hidden { display: none !important; }
+
+  /* ---------- CARDS / BUTTONS ---------- */
+  .card {
+    background: var(--card); border-radius: 14px;
+    padding: 14px; margin-bottom: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  }
+  .btn {
+    border: none; border-radius: 10px; padding: 10px 16px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    touch-action: manipulation; transition: opacity .15s;
+  }
+  .btn:active { opacity: .75; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-secondary { background: var(--border); color: var(--text); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 6px 10px; font-size: 13px; }
+  .btn-block { width: 100%; margin-top: 8px; }
+
+  /* ---------- FORMS ---------- */
+  .field { margin-bottom: 10px; }
+  .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 10px; border: 1px solid var(--border);
+    border-radius: 10px; font-size: 15px; font-family: inherit;
+    background: #faf9ff;
+  }
+  .field textarea { resize: vertical; min-height: 60px; }
+
+  /* ---------- TABLES ---------- */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td {
+    padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  th { background: #f0ecff; font-weight: 600; color: var(--primary-dark); position: sticky; top: 0; }
+  tbody tr:active { background: #f5f2ff; }
+
+  .journal th:first-child, .journal td:first-child {
+    position: sticky; left: 0; background: var(--card);
+    z-index: 2; box-shadow: 2px 0 4px rgba(0,0,0,.06);
+    min-width: 110px; font-weight: 600;
+  }
+  .journal th:first-child { background: #f0ecff; z-index: 3; }
+  .journal td { text-align: center; min-width: 42px; cursor: pointer; }
+  .journal td.cell-grade { font-size: 16px; }
+
+  /* ---------- STUDENT CARD ---------- */
+  .student-card { display: flex; gap: 12px; align-items: center; cursor: pointer; }
+  .avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: #ddd6f3; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #fff; flex-shrink: 0; overflow: hidden;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .student-card .info { flex: 1; min-width: 0; }
+  .student-card .name { font-weight: 600; font-size: 15px; }
+  .student-card .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ---------- MODAL ---------- */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    z-index: 100; display: flex; align-items: flex-end;
+    animation: fadeIn .15s ease;
+  }
+  .modal {
+    background: var(--card); width: 100%; max-height: 88vh; overflow-y: auto;
+    border-radius: 18px 18px 0 0; padding: 18px;
+    animation: slideUp .2s ease;
+  }
+  .modal h2 { margin: 0 0 14px; font-size: 17px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .modal-actions .btn { flex: 1; }
+  @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes slideUp { from { transform: translateY(30px); opacity: .5 } to { transform: translateY(0); opacity: 1 } }
+
+  /* ---------- MISC ---------- */
+  .empty { text-align: center; color: var(--muted); padding: 30px 10px; font-size: 14px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .chip {
+    display: inline-block; padding: 4px 10px; border-radius: 20px;
+    font-size: 12px; background: var(--border); color: var(--text);
+  }
+  .chip.active { background: var(--primary); color: #fff; }
+  .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .month-nav .label { font-weight: 600; font-size: 15px; }
+
+  .grade-picker { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  .grade-picker button {
+    font-size: 22px; padding: 6px 10px; border: 2px solid var(--border);
+    border-radius: 12px; background: #fff; cursor: pointer; touch-action: manipulation;
+  }
+  .grade-picker button:active { background: #f0ecff; }
+
+  .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 10px 0; }
+  .num-grid button {
+    padding: 12px 0; font-size: 16px; border: 2px solid var(--border);
+    border-radius: 10px; background: #fff; cursor: pointer; touch-action: manipulation;
+  }
+  .num-grid button:active { background: #f0ecff; }
+</style>
+</head>
+<body>
+
+<!-- ЭКРАН ЗАГРУЗКИ -->
+<div id="loader">
+  <div class="spinner"></div>
+  <div>Загрузка…</div>
+</div>
+
+<header>
+  <button class="back-btn hidden" id="backBtn">← Назад</button>
+  <h1 id="title">Гимнастическая школа</h1>
+</header>
+
+<main id="app"></main>
+
+<nav>
+  <button data-tab="students" class="active"><span class="ico">👥</span>Ученики</button>
+  <button data-tab="groups"><span class="ico">📁</span>Группы</button>
+  <button data-tab="journal"><span class="ico">📒</span>Журнал</button>
+  <button data-tab="topics"><span class="ico">📚</span>Темы</button>
+</nav>
+
+<script>
+/* ============================================================
+   ХРАНИЛИЩЕ
+   ============================================================ */
+const DB = {
+  load(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) { return fallback; }
+  },
+  save(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); }
+    catch (e) { console.warn('save failed', key); }
+  }
+};
+
+const DEFAULT_GROUPS = [
+  { id: 'junior',  name: 'Младшая',       ageMin: 3,  ageMax: 8,  gradeType: 'emoji' },
+  { id: 'middle',  name: 'Средняя',       ageMin: 9,  ageMax: 14, gradeType: 'emoji' },
+  { id: 'senior',  name: 'Старшая',       ageMin: 15, ageMax: 18, gradeType: 'number' },
+  { id: 'circus',  name: 'Шоу/Цирковая',  ageMin: 13, ageMax: 99, gradeType: 'number' },
+];
+
+function uid() { return 's' + Math.random().toString(36).slice(2, 9); }
+
+const DEFAULT_STUDENTS = [
+  { id: uid(), name: 'Артём',   groupId: 'junior', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Влад',    groupId: 'junior', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Даша',    groupId: 'junior', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Егор',    groupId: 'junior', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Милана',  groupId: 'junior', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Полина',  groupId: 'junior', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Тимур',   groupId: 'junior', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Алиса',   groupId: 'middle', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Варя',    groupId: 'middle', birthdate: '', enrolled: '', photo: '', character: 'Сама Варя, 11 лет' },
+  { id: uid(), name: 'Вероника',groupId: 'middle', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Ксюша',   groupId: 'middle', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Максим',  groupId: 'middle', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Маша',    groupId: 'middle', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Никита',  groupId: 'middle', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Соня',    groupId: 'middle', birthdate: '', enrolled: '', photo: '', character: '' },
+  { id: uid(), name: 'Юля',     groupId: 'middle', birthdate: '', enrolled: '', photo: '', character: '' },
+];
+
+const state = {
+  groups:    DB.load('gs_groups',    null) || DEFAULT_GROUPS,
+  students:  DB.load('gs_students',  null) || DEFAULT_STUDENTS,
+  grades:    DB.load('gs_grades',    {}),
+  topics:    DB.load('gs_topics',    []),
+  tab:       'students',
+  view:      { screen: 'list' },
+  journalMonth: new Date(),
+  journalGroupId: null,
+};
+
+function persist() {
+  DB.save('gs_groups',   state.groups);
+  DB.save('gs_students', state.students);
+  DB.save('gs_grades',   state.grades);
+  DB.save('gs_topics',   state.topics);
+}
+
+/* ============================================================
+   УТИЛИТЫ
+   ============================================================ */
+function esc(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function ageOf(birthdate) {
+  if (!birthdate) return null;
+  const b = new Date(birthdate);
+  if (isNaN(b)) return null;
+  const now = new Date();
+  let a = now.getFullYear() - b.getFullYear();
+  const m = now.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < b.getDate())) a--;
+  return a;
+}
+
+function getGroup(id) { return state.groups.find(g => g.id === id); }
+function getStudent(id) { return state.students.find(s => s.id === id); }
+
+function formatMonth(d) {
+  return d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+}
+function daysInMonth(d) {
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+}
+function dateStr(d, day) {
+  return d.getFullYear() + '-' +
+         String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(day).padStart(2, '0');
+}
+
+/* ============================================================
+   МОДАЛЬНЫЕ ДИАЛОГИ
+   ============================================================ */
+function modal({ title, bodyHTML, actions }) {
+  return new Promise(resolve => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal">
+        <h2>${esc(title)}</h2>
+        <div id="modalBody">${bodyHTML || ''}</div>
+        <div class="modal-actions" id="modalActions"></div>
+      </div>`;
+    const actionsBox = backdrop.querySelector('#modalActions');
+    (actions || []).forEach(a => {
+      const btn = document.createElement('button');
+      btn.className = 'btn ' + (a.className || 'btn-secondary');
+      btn.textContent = a.label;
+      btn.addEventListener('click', () => {
+        const val = a.collect ? a.collect(backdrop) : undefined;
+        backdrop.remove();
+        resolve(val === undefined ? a.value : val);
+      });
+      actionsBox.appendChild(btn);
+    });
+    backdrop.addEventListener('click', e => {
+      if (e.target === backdrop) { backdrop.remove(); resolve(null); }
+    });
+    document.body.appendChild(backdrop);
+  });
+}
+
+async function confirmDialog(title, text) {
+  const res = await modal({
+    title,
+    bodyHTML: `<p style="margin:0;color:var(--muted)">${esc(text)}</p>`,
+    actions: [
+      { label: 'Отмена', className: 'btn-secondary', value: false },
+      { label: 'Да',     className: 'btn-danger',    value: true }
+    ]
+  });
+  return res === true;
+}
+
+/* ============================================================
+   СЖАТИЕ ФОТО
+   ============================================================ */
+function compressImage(file, maxSize = 200) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ============================================================
+   РЕНДЕР
+   ============================================================ */
+const app = document.getElementById('app');
+const titleEl = document.getElementById('title');
+const backBtn = document.getElementById('backBtn');
+
+function goTab(tab) {
+  state.tab = tab;
+  state.view = { screen: 'list' };
+  document.querySelectorAll('nav button').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === tab));
+  render();
+}
+
+function render() {
+  updateHeader();
+  switch (state.tab) {
+    case 'students':  renderStudentsTab();  break;
+    case 'groups':    renderGroupsTab();    break;
+    case 'journal':   renderJournalTab();   break;
+    case 'topics':    renderTopicsTab();    break;
+  }
+}
+
+function updateHeader() {
+  const v = state.view;
+  if (v.screen === 'list') {
+    titleEl.textContent = ({
+      students: 'Ученики', groups: 'Группы',
+      journal: 'Журнал',   topics: 'Темы уроков'
+    })[state.tab];
+    backBtn.classList.add('hidden');
+  } else {
+    titleEl.textContent = v.title || 'Назад';
+    backBtn.classList.remove('hidden');
+  }
+}
+
+backBtn.addEventListener('click', () => {
+  state.view = { screen: 'list' };
+  render();
+});
+
+/* ============================================================
+   УЧЕНИКИ
+   ============================================================ */
+function renderStudentsTab() {
+  const v = state.view;
+
+  if (v.screen === 'student') {
+    const s = getStudent(v.studentId);
+    if (!s) { state.view = { screen: 'list' }; return renderStudentsTab(); }
+    const g = getGroup(s.groupId);
+    const age = ageOf(s.birthdate);
+    const avg = calcAverage(s.id);
+    const grades = state.grades[s.id] || {};
+    const gradeRows = Object.keys(grades).sort().reverse().map(date =>
+      `<tr><td>${date}</td><td>${gradeDisplay(grades[date])}</td></tr>`).join('');
+
+    app.innerHTML = `
+      <div class="card">
+        <div class="student-card">
+          <div class="avatar">${s.photo ? `<img src="${s.photo}">` : esc(s.name[0])}</div>
+          <div class="info">
+            <div class="name">${esc(s.name)}</div>
+            <div class="meta">${esc(g ? g.name : '—')} • ${age != null ? age + ' лет' : 'возраст не указан'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <strong>Профиль</strong>
+          <div class="row">
+            <button class="btn btn-sm btn-secondary" data-act="edit-student" data-id="${s.id}">✏️ Изменить</button>
+            <button class="btn btn-sm btn-danger" data-act="del-student" data-id="${s.id}">🗑 Удалить</button>
+          </div>
+        </div>
+        <p style="margin:10px 0 4px;font-size:13px;color:var(--muted)">Дата рождения</p>
+        <p style="margin:0 0 10px">${esc(s.birthdate || '—')}</p>
+        <p style="margin:0 0 4px;font-size:13px;color:var(--muted)">Дата зачисления</p>
+        <p style="margin:0 0 10px">${esc(s.enrolled || '—')}</p>
+        <p style="margin:0 0 4px;font-size:13px;color:var(--muted)">Характеристика</p>
+        <p style="margin:0">${esc(s.character || '—')}</p>
+        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
+        <strong>Перевод в другую группу</strong>
+        <div class="field" style="margin-top:8px">
+          <select id="moveGroupSelect">
+            ${state.groups.map(gr =>
+              `<option value="${gr.id}" ${gr.id===s.groupId?'selected':''}>${esc(gr.name)}</option>`).join('')}
+          </select>
+        </div>
+        <button class="btn btn-primary btn-block" data-act="move-student" data-id="${s.id}">Перевести</button>
+      </div>
+
+      <div class="card">
+        <strong>Оценки</strong>
+        ${avg != null ? `<span class="chip" style="margin-left:8px">средний балл: ${avg.toFixed(2)}</span>` : ''}
+        <button class="btn btn-primary btn-block" data-act="add-grade" data-id="${s.id}">➕ Поставить оценку</button>
+        ${gradeRows
+          ? `<div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Дата</th><th>Оценка</th></tr></thead><tbody>${gradeRows}</tbody></table></div>`
+          : `<div class="empty">Оценок пока нет</div>`}
+      </div>
+    `;
+    return;
+  }
+
+  const rows = state.students.map(s => {
+    const g = getGroup(s.groupId);
+    const age = ageOf(s.birthdate);
+    return `
+      <tr data-act="open-student" data-id="${s.id}">
+        <td>
+          <div class="student-card" style="padding:0">
+            <div class="avatar" style="width:34px;height:34px;font-size:14px">
+              ${s.photo ? `<img src="${s.photo}">` : esc(s.name[0])}
+            </div>
+            <div class="info"><div class="name" style="font-size:14px">${esc(s.name)}</div></div>
+          </div>
+        </td>
+        <td>${age != null ? age + ' лет' : '—'}</td>
+        <td>${esc(g ? g.name : '—')}</td>
+        <td>${esc(s.birthdate || '—')}</td>
+        <td>${esc(s.enrolled || '—')}</td>
+      </tr>`;
+  }).join('');
+
+  app.innerHTML = `
+    <div class="card" style="padding:10px">
+      <button class="btn btn-primary btn-block" data-act="add-student">➕ Добавить ученика</button>
+    </div>
+    ${state.students.length
+      ? `<div class="table-wrap"><table>
+           <thead><tr><th>Имя</th><th>Возраст</th><th>Группа</th><th>Дат
